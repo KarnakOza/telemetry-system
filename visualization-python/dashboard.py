@@ -25,3 +25,87 @@ app.layout = html.Div(style={
             'margin': '10px'
         })
     ]),
+
+    
+    html.Div([
+        dcc.Graph(id='temp-graph', style={'width': '48%', 'display': 'inline-block'}),
+        dcc.Graph(id='volt-graph', style={'width': '48%', 'display': 'inline-block'})
+    ]),
+
+    html.H3("📊 Latest Telemetry", style={'textAlign': 'center'}),
+
+    html.Div(id='table', style={'padding': '20px'}),
+
+    dcc.Interval(id='interval', interval=1000, n_intervals=0)
+])
+
+# ================= UPDATE =================
+@app.callback(
+    [Output('temp-graph', 'figure'),
+     Output('volt-graph', 'figure'),
+     Output('status-box', 'children'),
+     Output('status-box', 'style'),
+     Output('table', 'children')],
+    [Input('interval', 'n_intervals')]
+)
+def update(n):
+
+    try:
+        df = pd.read_csv("telemetry.csv",
+                         names=["seq", "time", "temp", "volt"])
+
+        # ===== TEMPERATURE GRAPH =====
+        temp_fig = go.Figure()
+        temp_fig.add_trace(go.Scatter(
+            x=df["seq"], y=df["temp"],
+            mode='lines+markers',
+            name='Temperature'
+        ))
+
+        temp_fig.update_layout(
+            template="plotly_dark",
+            title="Temperature",
+            xaxis_title="Packet",
+            yaxis_title="°C"
+        )
+
+        # ===== VOLTAGE GRAPH =====
+        volt_fig = go.Figure()
+        volt_fig.add_trace(go.Scatter(
+            x=df["seq"], y=df["volt"],
+            mode='lines+markers',
+            name='Voltage'
+        ))
+
+        volt_fig.update_layout(
+            template="plotly_dark",
+            title="Voltage",
+            xaxis_title="Packet",
+            yaxis_title="V"
+        )
+
+        # ===== STATUS =====
+        if len(df) > 0:
+            last_temp = df["temp"].iloc[-1]
+
+            if last_temp > 25:
+                status = "🔴 ALERT: High Temperature"
+                style = {
+                    'textAlign': 'center',
+                    'fontSize': '28px',
+                    'padding': '10px',
+                    'border': '2px solid red',
+                    'color': 'red'
+                }
+            else:
+                status = "🟢 SYSTEM NORMAL"
+                style = {
+                    'textAlign': 'center',
+                    'fontSize': '28px',
+                    'padding': '10px',
+                    'border': '2px solid green',
+                    'color': 'lightgreen'
+                }
+        else:
+            status = "No Data"
+            style = {}
