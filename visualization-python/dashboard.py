@@ -109,3 +109,20 @@ def update(n):
         else:
             status = "No Data"
             style = {}
+
+ # ===== TABLE =====
+        table = html.Table([
+            html.Tr([html.Th(col) for col in df.columns])
+        ] + [
+            html.Tr([html.Td(df.iloc[i][col]) for col in df.columns])
+            for i in range(max(0, len(df)-5), len(df))
+        ])
+
+        return temp_fig, volt_fig, status, style, table
+
+    except:
+        return go.Figure(), go.Figure(), "Waiting...", {}, ""
+
+# ================= RUN =================
+if __name__ == '__main__':
+    app.run(debug=True)
